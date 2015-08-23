@@ -1,0 +1,129 @@
+#!/usr/bin/env perl
+use utf8;
+use Mojolicious::Lite;
+use Encode qw(encode);
+use Unicode::Normalize qw(NFC);
+
+my $string = <<"HERE";
+A4 (currency)       =| \x{a4}
+BE (three quarters) =| \x{be}
+DE (thorn)          =| \x{DE}
+FD (y acute)        =| \x{FD}
+HERE
+
+my $utf8_octets   = encode( 'utf8',       $string );
+my $latin1_octets = encode( 'iso-8859-1', $string );
+my $latin5_octets = encode( 'iso-8859-9', $string );
+my $ascii         = $string;
+
+my %Encodings = (
+	latin1 => [ 'iso-8859-1', $latin1_octets ],
+	latin5 => [ 'iso-8859-9', $latin5_octets ],
+	utf8   => [ 'utf-8',      $utf8_octets   ],
+	ascii  => [ 'ascii',      $ascii         ],
+	);
+
+get "/" => sub {
+	my $c = shift;
+	
+	my $content = "<p>Should look like</p>\n\n<pre>$string</pre>\n\n";
+
+	$content .= "<ul>";
+
+	foreach my $really ( sort keys %Encodings ) {		
+		foreach my $but_declared_as ( sort keys %Encodings ) {		
+			$content .= qq(<li><a href="/$really/$but_declared_as">$really but declared as $but_declared_as</a></li>);	
+			}
+		}
+			
+	$content .= '</ul>';
+	
+	$c->stash( heading => 'Encodings' );
+	$c->stash( content => $content );
+	$c->render( 'index' );
+	};
+
+get "/bytes" => sub {
+	my $c = shift;
+	
+	my $this = "$string\n\n";
+
+	foreach my $encoding ( keys %Encodings ) {		
+		my $content = join ' ', map { sprintf '%02x', ord $_ } split //, $Encodings{$encoding}[1];
+		$this .= sprintf "%-10s %s\n", $encoding, $content;
+		}
+
+	$c->res->headers->content_type("text/plain; charset=utf-8");
+	$c->res->headers->content_encoding( 'utf-8' );
+	$c->res->headers->header( 'X-CrankyHTTP' => time );
+
+	$c->render( text => $this );
+	};
+
+get '/:really' => sub {
+	my $c = shift;
+
+	my $really = $c->param( 'really' );	
+	
+	unless( exists $Encodings{$really} ) {
+		$c->render( 
+			text => 'Possible encodings are ' . join( ' ', keys %Encodings ), 
+			status => 408, 
+			);
+		return;
+		}
+
+	# string is a Perl string and we want octets in some other
+	# encoding.
+	my $octets = encode( $Encodings{$really}[0], $string );
+
+	$c->res->headers->content_type("text/plain; charset=$Encodings{$really}[0]");
+	$c->res->headers->content_encoding( $Encodings{$really}[0] );
+	$c->res->headers->header( 'X-CrankyHTTP' => time );
+
+	$c->render( data => $Encodings{$really}[1] );		
+	};	
+
+get "/:really/:but_declared_as" => sub {
+	my $c = shift;
+
+	my $really          = $c->param( 'really' );
+	my $but_declared_as = $c->param( 'but_declared_as' );
+	
+	
+	# The output encoding can lie, which is the point.
+	unless( exists $Encodings{$really} && exists $Encodings{$but_declared_as} ) {
+		$c->render( 
+			text => 'Possible encodings are ' . join( ' ', keys %Encodings ), 
+			status => 408, 
+			);
+		return;
+		}
+
+	# string is a Perl string and we want octets in some other
+	# encoding.
+	my $octets = encode( $Encodings{$really}[0], $string );
+
+	$c->res->headers->content_type("text/plain; charset=$Encodings{$but_declared_as}[0]");
+	$c->res->headers->content_encoding( $Encodings{$but_declared_as}[0] );
+	$c->res->headers->header( 'X-CrankyHTTP' => time );
+
+	$c->render( data => $utf8_octets );		
+	};	
+
+app->start;
+__DATA__
+
+@@ index.html.ep
+% layout 'default';
+% title 'Content Encoding tests';
+
+@@ layouts/default.html.ep
+<!DOCTYPE html>
+<html>
+  <head><title><%= title %></title></head>
+  <body>
+  <h1><%= $heading %></h1>
+  <%== $content %>
+  </body>
+</html>
