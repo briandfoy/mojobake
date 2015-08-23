@@ -25,7 +25,7 @@ my %Encodings = (
 
 get "/" => sub {
 	my $c = shift;
-	
+
 	my $content = "<p>Should look like</p>\n\n<pre>$string</pre>\n\n";
 
 	$content .= "<ul>";
@@ -35,9 +35,9 @@ get "/" => sub {
 			$content .= qq(<li><a href="/$really/$but_declared_as">$really but declared as $but_declared_as</a></li>);	
 			}
 		}
-			
+
 	$content .= '</ul>';
-	
+
 	$c->stash( heading => 'Encodings' );
 	$c->stash( content => $content );
 	$c->render( 'index' );
@@ -45,10 +45,10 @@ get "/" => sub {
 
 get "/bytes" => sub {
 	my $c = shift;
-	
+
 	my $this = "$string\n\n";
 
-	foreach my $encoding ( keys %Encodings ) {		
+	foreach my $encoding ( keys %Encodings ) {
 		my $content = join ' ', map { sprintf '%02x', ord $_ } split //, $Encodings{$encoding}[1];
 		$this .= sprintf "%-10s %s\n", $encoding, $content;
 		}
@@ -63,12 +63,12 @@ get "/bytes" => sub {
 get '/:really' => sub {
 	my $c = shift;
 
-	my $really = $c->param( 'really' );	
-	
+	my $really = $c->param( 'really' );
+
 	unless( exists $Encodings{$really} ) {
-		$c->render( 
-			text => 'Possible encodings are ' . join( ' ', keys %Encodings ), 
-			status => 408, 
+		$c->render(
+			text => 'Possible encodings are ' . join( ' ', keys %Encodings ),
+			status => 408,
 			);
 		return;
 		}
@@ -89,13 +89,13 @@ get "/:really/:but_declared_as" => sub {
 
 	my $really          = $c->param( 'really' );
 	my $but_declared_as = $c->param( 'but_declared_as' );
-	
-	
+
+
 	# The output encoding can lie, which is the point.
 	unless( exists $Encodings{$really} && exists $Encodings{$but_declared_as} ) {
-		$c->render( 
-			text => 'Possible encodings are ' . join( ' ', keys %Encodings ), 
-			status => 408, 
+		$c->render(
+			text => 'Possible encodings are ' . join( ' ', keys %Encodings ),
+			status => 408,
 			);
 		return;
 		}
