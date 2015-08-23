@@ -2,7 +2,6 @@
 use utf8;
 use Mojolicious::Lite;
 use Encode qw(encode);
-use Unicode::Normalize qw(NFC);
 
 my $string = <<"HERE";
 A4 (currency)       =| \x{a4}
