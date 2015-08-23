@@ -29,9 +29,9 @@ get "/" => sub {
 
 	$content .= "<ul>";
 
-	foreach my $really ( sort keys %Encodings ) {		
-		foreach my $but_declared_as ( sort keys %Encodings ) {		
-			$content .= qq(<li><a href="/$really/$but_declared_as">$really but declared as $but_declared_as</a></li>);	
+	foreach my $really ( sort keys %Encodings ) {
+		foreach my $but_declared_as ( sort keys %Encodings ) {
+			$content .= qq(<li><a href="/$really/$but_declared_as">$really but declared as $but_declared_as</a></li>);
 			}
 		}
 
