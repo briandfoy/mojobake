@@ -107,8 +107,8 @@ get "/:really/:but_declared_as" => sub {
 	$c->res->headers->content_encoding( $Encodings{$but_declared_as}[0] );
 	$c->res->headers->header( 'X-CrankyHTTP' => time );
 
-	$c->render( data => $utf8_octets );		
-	};	
+	$c->render( data => $Encodings{$really}[1] );
+	};
 
 app->start;
 __DATA__
