@@ -35,6 +35,10 @@ get "/" => sub {
 			}
 		}
 
+	foreach my $really ( sort keys %Encodings ) {
+		$content .= qq(<li><a href="/none/$really">$really but no encoding declaration</a></li>);
+		}
+
 	$content .= '</ul>';
 
 	$c->stash( heading => 'Encodings' );
@@ -83,7 +87,7 @@ get '/:really' => sub {
 	$c->render( data => $Encodings{$really}[1] );
 	};
 
-get "/none/:really" = sub {
+get "/none/:really" => sub {
 	my $c = shift;
 
 	my $really          = $c->param( 'really' );
