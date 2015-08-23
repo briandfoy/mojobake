@@ -80,8 +80,30 @@ get '/:really' => sub {
 	$c->res->headers->content_encoding( $Encodings{$really}[0] );
 	$c->res->headers->header( 'X-CrankyHTTP' => time );
 
-	$c->render( data => $Encodings{$really}[1] );		
-	};	
+	$c->render( data => $Encodings{$really}[1] );
+	};
+
+get "/none/:really" = sub {
+	my $c = shift;
+
+	my $really          = $c->param( 'really' );
+
+	unless( exists $Encodings{$really} ) {
+		$c->render(
+			text => 'Possible encodings are ' . join( ' ', keys %Encodings ),
+			status => 408,
+			);
+		return;
+		}
+
+	my $octets = encode( $Encodings{$really}[0], $string );
+
+	$c->res->headers->content_type("text/plain");
+	$c->res->headers->header( 'X-CrankyHTTP' => time );
+
+	$c->render( data => $utf8_octets );
+	};
+
 
 get "/:really/:but_declared_as" => sub {
 	my $c = shift;
